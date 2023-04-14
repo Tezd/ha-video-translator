@@ -1,5 +1,15 @@
 package tesseract
 
+import (
+	"io"
+	"os/exec"
+	"strconv"
+)
+
+const (
+	ERROR_EXIT_CODE = 1
+)
+
 type (
 	PageSegmentation = uint8
 	OCREngineMode    = uint8
@@ -51,11 +61,68 @@ type (
 	}
 
 	Result struct {
-		StdOut string
+		StdOut   string
+		StdErr   string
+		ExitCode int
 	}
 )
 
 func (o Operation) Perform() Result {
+	cmd := exec.Command(
+		"tesseract",
+		[]string{
+			o.PathToFile,
+			"-",
+			"-l", o.TargetLanguage,
+			"--psm", strconv.Itoa(int(o.PageSegmentationMode)),
+			"--oem", strconv.Itoa(int(o.OCREngineMode)),
+			"--loglevel", o.LogLevel,
+		}...,
+	)
 
-	return Result{}
+	stdOut, err := cmd.StdoutPipe()
+	if err != nil {
+		return makeErrorResult(err)
+	}
+
+	stdErr, err := cmd.StderrPipe()
+	if err != nil {
+		return makeErrorResult(err)
+	}
+
+	if err = cmd.Start(); err != nil {
+		return makeErrorResult(err)
+	}
+
+	outBytes, err := io.ReadAll(stdOut)
+	if err != nil {
+		return makeErrorResult(err)
+	}
+
+	errBytes, err := io.ReadAll(stdErr)
+	if err != nil {
+		return makeErrorResult(err)
+	}
+
+	result := Result{
+		StdOut: string(outBytes),
+		StdErr: string(errBytes),
+	}
+
+	if err = cmd.Wait(); err != nil {
+		if exitError, ok := err.(*exec.ExitError); ok {
+			result.ExitCode = exitError.ExitCode()
+		} else {
+			result.ExitCode = ERROR_EXIT_CODE
+		}
+	}
+
+	return result
+}
+
+func makeErrorResult(err error) Result {
+	return Result{
+		StdErr:   err.Error(),
+		ExitCode: ERROR_EXIT_CODE,
+	}
 }
