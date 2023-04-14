@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  app:
+    image: ha-video-translator:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    user: translator:translator
+    volumes:
+      - .:/app
+    tty: true
