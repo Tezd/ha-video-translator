@@ -51,6 +51,7 @@ func (s *Service) translate(source string, out chan<- translation, wg *sync.Wait
 	}.Perform()
 
 	if ocr.ExitCode != 0 {
+		log.Printf("OCR failed with code [%v] and stderr [%v]", ocr.ExitCode, ocr.StdErr)
 		out <- translation{source: source}
 		return
 	}
