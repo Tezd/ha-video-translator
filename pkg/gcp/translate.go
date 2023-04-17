@@ -14,7 +14,7 @@ type (
 	}
 )
 
-func (t *Translator) translate(ctx context.Context, targetLanguage string, text ...string) []string {
+func (t *Translator) Translate(ctx context.Context, targetLanguage string, text ...string) []string {
 
 	lang, err := language.Parse(targetLanguage)
 	if err != nil {
