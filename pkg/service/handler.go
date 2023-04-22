@@ -101,11 +101,9 @@ func (s *Service) handle(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if err = json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Failed to marshal respoinse [%v]", err.Error())
+		log.Printf("Failed to marshal response [%v]", err.Error())
 		w.WriteHeader(http.StatusBadRequest)
 
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }
